@@ -5,8 +5,15 @@ BACK-END:
 BASE DE DATOS:
     En esta base de datos se encuentran 3 tablas. La tabla de los usuarios, en donde se almacenan el id, los nombres, emails, contraseñas y roles de los usuarios. Luego, está la tabla de tickets, en la cual está el id, títulos, descripciones, estatus, prioridad, created_at, updated_at, created_by y assigned_to. Y por último, está la tabla de ticket_comments, en el que está ticket_id, user_id, comment, created_at.
 
+MODIFICACIONES:
+    Se creó un nuevo endpoint llamado register, en el cual el usuario puede crear una nueva cuenta. Por 'default' se le otorgará el rol de 'USER'.
+
+    Se modificó la forma en la que se accede a un detalle del ticket. En vez de acceder presionando el id, se agregó un botón para que sea más visible para el usuario.
+
+    Los usuarios de ADMIN y AGENT no tienen la opción de crear un ticket.
+
 La base de datos está creada con MariaDB.
-Para crearla ejecutarás la siguiente consulta:
+Para crearla ejecutarás las siguientes consulta:
     CREATE DATABASE helpdesk_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     USE helpdesk_db;
 
@@ -55,6 +62,7 @@ Para instalar las dependencias colocarás lo siguiente:
 Para correr el código:
     # Windows
         python app.py
+
     # MacOS/Linux
         python3 app.py
 
