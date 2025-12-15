@@ -49,20 +49,16 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. **Configura la base de datos**
+4. **Ejecuta la aplicación**
 ```bash
-python
->>> from app import db
->>> db.create_all()
->>> exit()
-```
-
-5. **Ejecuta la aplicación**
-```bash
+# Windows
 python app.py
+
+# macOS/Linux
+python3 app.py
 ```
 
-6. **Accede a la aplicación**
+5. **Accede a la aplicación**
 Abre tu navegador en: `http://localhost:5000`
 
 
