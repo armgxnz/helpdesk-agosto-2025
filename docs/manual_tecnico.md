@@ -25,6 +25,8 @@ En esta base de datos se encuentran 3 tablas:
 
 - Los usuarios de **ADMIN** y **AGENT** no tienen la opción de crear un ticket
 
+- Se agregó un filtro en la lista de tickets para filtrar los tickets por status, prioridad y orden de creación.
+
 ---
 
 ## 🗄️ Configuración de Base de Datos
