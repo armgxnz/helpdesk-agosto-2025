@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Users Management</h3>
+        <div id="notification-area"></div>
+    </div>
+    
+    <div class="card bg-dark">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                            <tr id="user-row-{{ u.id }}">
+                                <td>{{ u.id }}</td>
+                                <td>{{ u.name }}</td>
+                                <td>{{ u.email }}</td>
+                                <td>
+                                    <span class="badge role-badge-{{ u.id }}" id="role-badge-{{ u.id }}">
+                                        {% if u.role == 'ADMIN' %}
+                                            <span class="badge bg-danger">{{ u.role }}</span>
+                                        {% elif u.role == 'AGENT' %}
+                                            <span class="badge bg-warning text-dark">{{ u.role }}</span>
+                                        {% else %}
+                                            <span class="badge bg-info">{{ u.role }}</span>
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '-' }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <select name="role" class="form-select form-select-sm me-2" 
+                                                id="role-select-{{ u.id }}" 
+                                                data-user-id="{{ u.id }}"
+                                                data-user-name="{{ u.name }}"
+                                                style="max-width: 120px;">
+                                            <option value="USER" {% if u.role == "USER" %}selected{% endif %}>USER</option>
+                                            <option value="AGENT" {% if u.role == "AGENT" %}selected{% endif %}>AGENT</option>
+                                            <option value="ADMIN" {% if u.role == "ADMIN" %}selected{% endif %}>ADMIN</option>
+                                        </select>
+                                        <button class="btn btn-primary btn-sm update-role-btn" 
+                                                data-user-id="{{ u.id }}"
+                                                id="btn-{{ u.id }}">
+                                            <span class="btn-text">Update</span>
+                                            <span class="spinner-border spinner-border-sm d-none" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .fade-out {
+        animation: fadeOut 0.3s ease-out;
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+            transform: translateX(400px);
+        }
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Función para mostrar notificaciones
+    function showNotification(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const notification = $(`
+            <div class="alert ${alertClass} notification alert-dismissible fade show" role="alert">
+                <strong>${type === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `);
+        
+        $('#notification-area').append(notification);
+        
+        // Auto-cerrar después de 4 segundos
+        setTimeout(function() {
+            notification.addClass('fade-out');
+            setTimeout(function() {
+                notification.remove();
+            }, 300);
+        }, 4000);
+    }
+    
+    // Función para actualizar el badge del rol
+    function updateRoleBadge(userId, role) {
+        let badgeClass = '';
+        let badgeText = role;
+        
+        if (role === 'ADMIN') {
+            badgeClass = 'bg-danger';
+        } else if (role === 'AGENT') {
+            badgeClass = 'bg-warning text-dark';
+        } else {
+            badgeClass = 'bg-info';
+        }
+        
+        $(`#role-badge-${userId}`).html(`<span class="badge ${badgeClass}">${badgeText}</span>`);
+    }
+    
+    // Manejar el clic en el botón de actualizar
+    $('.update-role-btn').on('click', function(e) {
+        e.preventDefault();
+        
+        const userId = $(this).data('user-id');
+        const button = $(this);
+        const select = $(`#role-select-${userId}`);
+        const newRole = select.val();
+        const userName = select.data('user-name');
+        
+        // Deshabilitar el botón y mostrar spinner
+        button.prop('disabled', true);
+        button.find('.btn-text').addClass('d-none');
+        button.find('.spinner-border').removeClass('d-none');
+        select.prop('disabled', true);
+        
+        // Realizar la petición AJAX
+        $.ajax({
+            url: `/users/${userId}/role`,
+            type: 'POST',
+            data: {
+                role: newRole
+            },
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    showNotification(response.message, 'success');
+                    updateRoleBadge(userId, newRole);
+                    
+                    // Efecto visual en la fila
+                    $(`#user-row-${userId}`).addClass('table-success');
+                    setTimeout(function() {
+                        $(`#user-row-${userId}`).removeClass('table-success');
+                    }, 1500);
+                }
+            },
+            error: function(xhr) {
+                const errorMessage = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred while updating the role';
+                showNotification(errorMessage, 'error');
+                
+                // Efecto visual de error
+                $(`#user-row-${userId}`).addClass('table-danger');
+                setTimeout(function() {
+                    $(`#user-row-${userId}`).removeClass('table-danger');
+                }, 1500);
+            },
+            complete: function() {
+                // Re-habilitar el botón y ocultar spinner
+                button.prop('disabled', false);
+                button.find('.btn-text').removeClass('d-none');
+                button.find('.spinner-border').addClass('d-none');
+                select.prop('disabled', false);
+            }
+        });
+    });
+    
+    // Opcional: Actualizar automáticamente cuando cambia el select
+    // Descomenta esto si quieres que se actualice al cambiar el dropdown
+
+    $('select[name="role"]').on('change', function() {
+        const userId = $(this).data('user-id');
+        $(`#btn-${userId}`).click();
+    });
+    
+});
+</script>
+{% endblock content %}

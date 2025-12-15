@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Dashboard</h2>
+        <div>
+            {% if user_role == "USER" %}
+                <a href="{{ url_for('ticket_new') }}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> New Ticket
+                </a>
+            {% endif %}
+            <a href="{{ url_for('tickets_list') }}" class="btn btn-primary">
+                <i class="bi bi-list-ul"></i> View All Tickets
+            </a>
+        </div>
+    </div>
+
+    <!-- ADMIN y AGENT Dashboard -->
+    {% if user_role in ["ADMIN", "AGENT"] %}
+    
+    <!-- Estadísticas Principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Tickets</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.total_tickets }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-ticket-perforated"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Open</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.open_tickets }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-envelope-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">In Progress</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.in_progress_tickets }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Resolved</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.resolved_tickets }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda fila de estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">High Priority</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.high_priority }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Medium Priority</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.medium_priority }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-dash-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Low Priority</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.low_priority }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-arrow-down-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Unassigned</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.unassigned_tickets }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-person-x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Para AGENT: Mis tickets asignados -->
+    {% if user_role == "AGENT" and stats.my_assigned is not none %}
+    <div class="alert alert-info">
+        <i class="bi bi-person-check"></i> You have <strong>{{ stats.my_assigned }}</strong> tickets assigned to you
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Tickets Urgentes -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-fire"></i> Urgent Tickets</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if stats.urgent_tickets %}
+                        <div class="list-group list-group-flush">
+                            {% for ticket in stats.urgent_tickets %}
+                            <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">#{{ ticket.id }} - {{ ticket.title }}</h6>
+                                    <small class="text-muted">{{ ticket.created_at.strftime('%Y-%m-%d') if ticket.created_at else '' }}</small>
+                                </div>
+                                <small class="text-muted">Created by: {{ ticket.created_by_name }}</small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">No urgent tickets</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividad Reciente -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if stats.recent_tickets %}
+                        <div class="list-group list-group-flush">
+                            {% for ticket in stats.recent_tickets %}
+                            <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" 
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0">#{{ ticket.id }} - {{ ticket.title }}</h6>
+                                    {% if ticket.status == 'OPEN' %}
+                                        <span class="badge bg-info">{{ ticket.status }}</span>
+                                    {% elif ticket.status == 'IN_PROGRESS' %}
+                                        <span class="badge bg-warning text-dark">{{ ticket.status }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ ticket.status }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">{{ ticket.created_by_name }}</small>
+                                    <small class="text-muted">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') if ticket.created_at else '' }}</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">No recent activity</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- USER Dashboard -->
+    {% if user_role == "USER" %}
+    
+    <!-- Estadísticas del Usuario -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">My Tickets</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.total_user_tickets }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-ticket-perforated"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Open</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.user_open }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-envelope-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">In Progress</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.user_in_progress }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Resolved</h6>
+                            <h2 class="mb-0 mt-2">{{ stats.user_resolved }}</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda fila - Prioridades del Usuario -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">High Priority</h6>
+                    <h2>{{ stats.user_high }}</h2>
+                    <small>Active tickets</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Medium Priority</h6>
+                    <h2>{{ stats.user_medium }}</h2>
+                    <small>Active tickets</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title">Low Priority</h6>
+                    <h2>{{ stats.user_low }}</h2>
+                    <small>Active tickets</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis Tickets Recientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-ul"></i> My Recent Tickets</h5>
+                </div>
+                <div class="card-body">
+                    {% if stats.user_recent_tickets %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Assigned To</th>
+                                        <th>Created</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ticket in stats.user_recent_tickets %}
+                                    <tr>
+                                        <td>#{{ ticket.id }}</td>
+                                        <td>{{ ticket.title }}</td>
+                                        <td>
+                                            {% if ticket.status == 'OPEN' %}
+                                                <span class="badge bg-info">{{ ticket.status }}</span>
+                                            {% elif ticket.status == 'IN_PROGRESS' %}
+                                                <span class="badge bg-warning text-dark">{{ ticket.status }}</span>
+                                            {% else %}
+                                                <span class="badge bg-success">{{ ticket.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if ticket.priority == "LOW" %}
+                                                <span class="badge bg-success">{{ ticket.priority }}</span>
+                                            {% elif ticket.priority == "MEDIUM" %}
+                                                <span class="badge bg-warning text-dark">{{ ticket.priority }}</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">{{ ticket.priority }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ ticket.assigned_to_name or '-' }}</td>
+                                        <td>{{ ticket.created_at.strftime('%Y-%m-%d') if ticket.created_at else '' }}</td>
+                                        <td>
+                                            <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" 
+                                               class="btn btn-sm btn-primary">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">You haven't created any tickets yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+{% endblock content %}

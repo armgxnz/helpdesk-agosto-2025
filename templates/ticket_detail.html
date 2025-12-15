@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="bi bi-ticket-detailed"></i> Ticket #{{ ticket.id }}
+            </h3>
+            <p class="text-muted mb-0">{{ ticket.title }}</p>
+        </div>
+        <a href="{{ url_for('tickets_list') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Columna Principal -->
+        <div class="col-lg-8">
+            <!-- Información del Ticket -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Ticket Information</h5>
+                    <div>
+                        {% if ticket.status == 'OPEN' %}
+                            <span class="badge bg-info fs-6">{{ ticket.status }}</span>
+                        {% elif ticket.status == 'IN_PROGRESS' %}
+                            <span class="badge bg-warning text-dark fs-6">{{ ticket.status }}</span>
+                        {% else %}
+                            <span class="badge bg-success fs-6">{{ ticket.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="bi bi-person text-primary"></i> 
+                                <strong>Created by:</strong> {{ ticket.created_by_name }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-person-check text-success"></i> 
+                                <strong>Assigned to:</strong> 
+                                {% if ticket.assigned_to_name %}
+                                    {{ ticket.assigned_to_name }}
+                                {% else %}
+                                    <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="bi bi-calendar text-info"></i> 
+                                <strong>Created:</strong> {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') if ticket.created_at else '-' }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-flag text-danger"></i> 
+                                <strong>Priority:</strong>
+                                {% if ticket.priority == "LOW" %}
+                                    <span class="badge bg-success">{{ ticket.priority }}</span>
+                                {% elif ticket.priority == "MEDIUM" %}
+                                    <span class="badge bg-warning text-dark">{{ ticket.priority }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ ticket.priority }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-0">
+                        <h6 class="text-muted mb-2"><i class="bi bi-file-text"></i> Description:</h6>
+                        <p class="ticket-description">{{ ticket.description }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Comentarios -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text"></i> Comments 
+                        <span class="badge bg-secondary">{{ comments|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body" id="comments-section">
+                    {% if comments %}
+                        <div class="comments-container" style="max-height: 500px; overflow-y: auto;">
+                            {% for c in comments %}
+                            <div class="comment-item mb-3 p-3 border rounded bg-light">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-2">
+                                            {{ c.user_name[0].upper() }}
+                                        </div>
+                                        <div>
+                                            <strong class="text-primary">{{ c.user_name }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-clock"></i> 
+                                                {{ c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '-' }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mb-0 comment-text">{{ c.comment }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-chat-left-dots fs-1"></i>
+                            <p class="mb-0 mt-2">No comments yet. Be the first to comment!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Agregar Comentario -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Add a Comment</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('comment_add', ticket_id=ticket.id) }}" method="post" id="comment-form">
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Your Comment</label>
+                            <textarea name="comment" id="comment" class="form-control" rows="4" 
+                                      placeholder="Type your comment here..." required></textarea>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Share updates, ask questions, or provide feedback
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-send"></i> Post Comment
+                            </button>
+                            <small class="text-muted">
+                                <i class="bi bi-person"></i> Posting as {{ session.get('user_name') }}
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Lateral -->
+        <div class="col-lg-4">
+            <div class="sticky-sidebar">
+                <!-- Panel de Control (Solo ADMIN/AGENT) -->
+                {% if session.get("user_role") in ["ADMIN", "AGENT"] %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-sliders"></i> Manage Ticket</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('ticket_update', ticket_id=ticket.id) }}" id="update-form">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="bi bi-diagram-3"></i> Status</label>
+                                <select name="status" class="form-select" id="status-select">
+                                    <option value="OPEN" {% if ticket.status == "OPEN" %}selected{% endif %}>
+                                        🔵 OPEN
+                                    </option>
+                                    <option value="IN_PROGRESS" {% if ticket.status == "IN_PROGRESS" %}selected{% endif %}>
+                                        🟡 IN PROGRESS
+                                    </option>
+                                    <option value="RESOLVED" {% if ticket.status == "RESOLVED" %}selected{% endif %}>
+                                        🟢 RESOLVED
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label"><i class="bi bi-person-badge"></i> Assign To</label>
+                                <select name="assigned_to" class="form-select" id="assign-select">
+                                    <option value="">-- Unassigned --</option>
+                                    {% for a in agents %}
+                                        <option value="{{ a.id }}" {% if ticket.assigned_to == a.id %}selected{% endif %}>
+                                            {{ a.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-check-circle"></i> Update Ticket
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Timeline/Activity (Info adicional) -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0"><i class="bi bi-activity"></i> Activity Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-item mb-3">
+                            <i class="bi bi-plus-circle text-success"></i>
+                            <small class="ms-2">
+                                <strong>Created</strong><br>
+                                {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') if ticket.created_at else '-' }}
+                            </small>
+                        </div>
+                        
+                        {% if comments %}
+                        <div class="activity-item mb-3">
+                            <i class="bi bi-chat-dots text-info"></i>
+                            <small class="ms-2">
+                                <strong>{{ comments|length }} Comment(s)</strong><br>
+                                Last: {{ comments[-1].created_at.strftime('%Y-%m-%d %H:%M') if comments[-1].created_at else '-' }}
+                            </small>
+                        </div>
+                        {% endif %}
+                        
+                        {% if ticket.assigned_to_name %}
+                        <div class="activity-item">
+                            <i class="bi bi-person-check text-primary"></i>
+                            <small class="ms-2">
+                                <strong>Assigned to</strong><br>
+                                {{ ticket.assigned_to_name }}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ticket-description {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .comment-item {
+        transition: all 0.2s ease;
+    }
+    
+    .comment-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 18px;
+    }
+    
+    .comment-text {
+        color: #333;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 10px;
+        border-left: 2px solid #dee2e6;
+    }
+    
+    .activity-item i {
+        font-size: 1.2rem;
+    }
+    
+    .comments-container {
+        scrollbar-width: thin;
+        scrollbar-color: #888 #f1f1f1;
+    }
+    
+    .comments-container::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .comments-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .comments-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .comments-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .sticky-sidebar {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+
+    @media (max-width: 991px) {
+        .sticky-sidebar {
+            position: relative !important;
+            top: 0 !important;
+        }
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Auto-scroll to latest comment
+    const commentsSection = $('.comments-container');
+    if (commentsSection.length) {
+        commentsSection.scrollTop(commentsSection[0].scrollHeight);
+    }
+    
+    // Confirmación al marcar como resuelto
+    $('#update-form').on('submit', function(e) {
+        const newStatus = $('#status-select').val();
+        const currentStatus = '{{ ticket.status }}';
+        
+        if (newStatus === 'RESOLVED' && currentStatus !== 'RESOLVED') {
+            if (!confirm('Are you sure you want to mark this ticket as RESOLVED?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+    
+    // Limpiar formulario después de enviar comentario
+    $('#comment-form').on('submit', function() {
+        setTimeout(function() {
+            $('#comment').val('');
+        }, 100);
+    });
+    
+    // Contador de caracteres (opcional)
+    let charCount = $('<small class="text-muted float-end">0 characters</small>');
+    $('#comment').parent().append(charCount);
+    
+    $('#comment').on('input', function() {
+        const length = $(this).val().length;
+        charCount.text(`${length} character${length !== 1 ? 's' : ''}`);
+    });
+});
+</script>
+{% endblock content %}
